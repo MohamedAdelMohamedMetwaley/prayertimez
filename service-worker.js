@@ -1,4 +1,4 @@
-const CACHE_NAME = 'prayer-times-v1';
+const CACHE_NAME = 'prayer-times-v2';
 const OFFLINE_URL = 'offline.html';
 const urlsToCache = [
     './',
@@ -38,54 +38,40 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// Fetch event - serve cached content when offline
+// Fetch event - network-first strategy
 self.addEventListener('fetch', event => {
-    // Handle API requests differently
-    if (event.request.url.includes('api.aladhan.com')) {
-        event.respondWith(
-            fetch(event.request)
-                .then(response => {
-                    // Clone the response before using it
-                    const responseToCache = response.clone();
+    event.respondWith(
+        fetch(event.request)
+            .then(response => {
+                // Clone the response before using it
+                const responseToCache = response.clone();
 
-                    // Cache the API response for 24 hours
-                    caches.open(CACHE_NAME).then(cache => {
+                // Cache the successful response
+                caches.open(CACHE_NAME)
+                    .then(cache => {
                         cache.put(event.request, responseToCache);
                     });
 
-                    return response;
-                })
-                .catch(() => {
-                    // If offline, try to return cached API response
-                    return caches.match(event.request);
-                })
-        );
-    } else {
-        // For non-API requests, use cache-first strategy
-        event.respondWith(
-            caches.match(event.request)
-                .then(response => {
-                    if (response) {
-                        return response;
-                    }
-                    return fetch(event.request)
-                        .then(response => {
-                            // Clone the response before using it
-                            const responseToCache = response.clone();
+                return response;
+            })
+            .catch(async () => {
+                // If network fails, try to get from cache
+                const cachedResponse = await caches.match(event.request);
 
-                            caches.open(CACHE_NAME).then(cache => {
-                                cache.put(event.request, responseToCache);
-                            });
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
 
-                            return response;
-                        })
-                        .catch(() => {
-                            // If offline and resource not in cache, return offline page
-                            if (event.request.mode === 'navigate') {
-                                return caches.match(OFFLINE_URL);
-                            }
-                        });
-                })
-        );
-    }
+                // If the resource isn't in the cache, return the offline page for navigation requests
+                if (event.request.mode === 'navigate') {
+                    return caches.match(OFFLINE_URL);
+                }
+
+                // If it's not a navigation request and not in cache, return a basic error response
+                return new Response('Network error happened', {
+                    status: 408,
+                    headers: { 'Content-Type': 'text/plain' },
+                });
+            })
+    );
 });
