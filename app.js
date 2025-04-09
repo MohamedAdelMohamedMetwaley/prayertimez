@@ -8,6 +8,7 @@ class PrayerTimes {
 
         this.initializeElements();
         this.initializeEventListeners();
+        this.initializePWA();
         this.start();
     }
 
@@ -22,8 +23,42 @@ class PrayerTimes {
             citySearch: document.getElementById('citySearch'),
             searchBtn: document.getElementById('searchBtn'),
             closeModal: document.getElementById('closeModal'),
-            changeLocation: document.getElementById('changeLocation')
+            changeLocation: document.getElementById('changeLocation'),
+            pwaInstall: document.getElementById('pwa-install'),
+            acceptPwa: document.getElementById('accept-pwa'),
+            denyPwa: document.getElementById('deny-pwa')
         };
+    }
+
+    initializePWA() {
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            this.deferredPrompt = e;
+            // Check if we should show the prompt
+            const lastDeclined = localStorage.getItem('pwaDeclined');
+            const now = Date.now();
+
+            if (!lastDeclined || (now - parseInt(lastDeclined)) > (7 * 24 * 60 * 60 * 1000)) { // 7 days
+                this.elements.pwaInstall.classList.remove('hidden');
+            }
+        });
+
+        this.elements.acceptPwa.addEventListener('click', async () => {
+            if (this.deferredPrompt) {
+                this.deferredPrompt.prompt();
+                const { outcome } = await this.deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    this.elements.pwaInstall.classList.add('hidden');
+                    localStorage.removeItem('pwaDeclined'); // Clear declined state if installed
+                }
+                this.deferredPrompt = null;
+            }
+        });
+
+        this.elements.denyPwa.addEventListener('click', () => {
+            this.elements.pwaInstall.classList.add('hidden');
+            localStorage.setItem('pwaDeclined', Date.now().toString());
+        });
     }
 
     initializeEventListeners() {

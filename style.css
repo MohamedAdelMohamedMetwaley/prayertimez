@@ -162,6 +162,51 @@ body {
   cursor: pointer;
 }
 
+#pwa-install {
+  font-size: 20px;
+  padding: 20px;
+  gap: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #1e3c72;
+  border-radius: 5px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  bottom: 40px;
+  right: 20px;
+  color: white;
+}
+
+#pwa-install button {
+  font-size: 16px;
+  padding: 8px 16px;
+  margin: 0 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#accept-pwa {
+  background-color: white;
+  color: #1e3c72;
+}
+
+#deny-pwa {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white !important;
+}
+
+#pwa-install>* {
+  margin: 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
