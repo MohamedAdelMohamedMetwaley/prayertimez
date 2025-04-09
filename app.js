@@ -130,31 +130,48 @@ class PrayerTimes {
     startCountdown() {
         setInterval(() => {
             const now = new Date();
-            const currentTime = now.getHours() * 60 + now.getMinutes();
+            const currentTime = now.getHours() * 60 * 60 + now.getMinutes() * 60 + now.getSeconds();
 
             let nextPrayer = '';
             let nextPrayerTime = Infinity;
+            let isNextDayFajr = false;
 
             Object.entries(this.times).forEach(([prayer, time]) => {
                 if (['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].includes(prayer)) {
                     const [hours, minutes] = time.split(':');
-                    const prayerMinutes = parseInt(hours) * 60 + parseInt(minutes);
+                    const prayerSeconds = parseInt(hours) * 60 * 60 + parseInt(minutes) * 60;
 
-                    if (prayerMinutes > currentTime && prayerMinutes < nextPrayerTime) {
+                    if (prayerSeconds > currentTime && prayerSeconds < nextPrayerTime) {
                         nextPrayer = prayer;
-                        nextPrayerTime = prayerMinutes;
+                        nextPrayerTime = prayerSeconds;
                     }
                 }
             });
 
-            if (nextPrayer) {
-                const remainingMinutes = nextPrayerTime - currentTime;
-                const hours = Math.floor(remainingMinutes / 60);
-                const minutes = remainingMinutes % 60;
-
-                this.elements.nextPrayerName.textContent = this.getPrayerNameInArabic(nextPrayer);
-                this.elements.countdown.textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
+            // If no next prayer found, it means we're past Isha
+            // So set next prayer to tomorrow's Fajr
+            if (!nextPrayer) {
+                const [fajrHours, fajrMinutes] = this.times.Fajr.split(':');
+                nextPrayer = 'Fajr';
+                nextPrayerTime = parseInt(fajrHours) * 60 * 60 + parseInt(fajrMinutes) * 60;
+                isNextDayFajr = true;
             }
+
+            // Calculate remaining time
+            let remainingSeconds;
+            if (isNextDayFajr) {
+                // Add 24 hours worth of seconds (1440) to get time until tomorrow's Fajr
+                remainingSeconds = (nextPrayerTime + 1440 * 60) - currentTime;
+            } else {
+                remainingSeconds = nextPrayerTime - currentTime;
+            }
+
+            const hours = Math.floor(remainingSeconds / 60 / 60);
+            const minutes = Math.floor((remainingSeconds / 60) % 60);
+            const seconds = remainingSeconds % 60;
+
+            this.elements.nextPrayerName.textContent = this.getPrayerNameInArabic(nextPrayer);
+            this.elements.countdown.textContent = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }, 1000);
     }
 
