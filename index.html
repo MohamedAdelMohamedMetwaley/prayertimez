@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1e3c72">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="مواقيت الصلاة">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <title>مواقيت الصلاة</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>مواقيت الصلاة</h1>
+            <div class="location">
+                <span id="city">القاهرة</span>
+                <button id="changeLocation">تغيير الموقع</button>
+            </div>
+            <div class="date">
+                <span id="hijriDate"></span>
+                <span id="gregorianDate"></span>
+            </div>
+        </div>
+
+        <div class="prayer-times">
+            <div class="prayer-card" data-prayer="fajr">
+                <h3>الفجر</h3>
+                <div class="time" id="fajr-time">--:--</div>
+            </div>
+            <div class="prayer-card" data-prayer="sunrise">
+                <h3>الشروق</h3>
+                <div class="time" id="sunrise-time">--:--</div>
+            </div>
+            <div class="prayer-card" data-prayer="dhuhr">
+                <h3>الظهر</h3>
+                <div class="time" id="dhuhr-time">--:--</div>
+            </div>
+            <div class="prayer-card" data-prayer="asr">
+                <h3>العصر</h3>
+                <div class="time" id="asr-time">--:--</div>
+            </div>
+            <div class="prayer-card" data-prayer="maghrib">
+                <h3>المغرب</h3>
+                <div class="time" id="maghrib-time">--:--</div>
+            </div>
+            <div class="prayer-card" data-prayer="isha">
+                <h3>العشاء</h3>
+                <div class="time" id="isha-time">--:--</div>
+            </div>
+        </div>
+
+        <div class="next-prayer">
+            <h2>الصلاة القادمة</h2>
+            <div id="next-prayer-name"></div>
+            <div id="countdown"></div>
+        </div>
+    </div>
+
+    <div id="locationModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>تغيير الموقع</h2>
+            <input type="text" id="citySearch" placeholder="ابحث عن مدينتك">
+            <button id="searchBtn">بحث</button>
+            <button id="closeModal">&times;</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+
+</html>
