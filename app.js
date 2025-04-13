@@ -5,11 +5,13 @@ class PrayerTimes {
         this.method = 5; // Egyptian General Authority of Survey
         this.times = {};
         this.nextPrayer = '';
+        this.notificationSettings = this.loadNotificationSettings();
 
         this.initializeElements();
         this.initializeEventListeners();
         this.initializePWA();
         this.start();
+        this.initializeNotifications();
     }
 
     initializeElements() {
@@ -26,7 +28,12 @@ class PrayerTimes {
             changeLocation: document.getElementById('changeLocation'),
             pwaInstall: document.getElementById('pwa-install'),
             acceptPwa: document.getElementById('accept-pwa'),
-            denyPwa: document.getElementById('deny-pwa')
+            denyPwa: document.getElementById('deny-pwa'),
+            notificationSettings: document.getElementById('notificationSettings'),
+            notificationModal: document.getElementById('notificationModal'),
+            closeNotificationModal: document.getElementById('closeNotificationModal'),
+            saveNotificationSettings: document.getElementById('saveNotificationSettings'),
+            globalNotificationTime: document.getElementById('globalNotificationTime'),
         };
     }
 
@@ -77,6 +84,7 @@ class PrayerTimes {
             const now = new Date();
             if (now.getHours() === 0 && now.getMinutes() === 0) {
                 this.fetchPrayerTimes();
+                this.scheduleNotifications();
             }
         }, 60000); // Check every minute
     }
@@ -202,6 +210,130 @@ class PrayerTimes {
             this.updateUI();
             this.hideModal();
         }
+    }
+
+    loadNotificationSettings() {
+        const defaultSettings = {
+            global: 15,
+            specific: {
+                Fajr: null,
+                Dhuhr: null,
+                Asr: null,
+                Maghrib: null,
+                Isha: null
+            }
+        };
+
+        const saved = localStorage.getItem('notificationSettings');
+        return saved ? JSON.parse(saved) : defaultSettings;
+    }
+
+    initializeNotifications() {
+        if (!('Notification' in window)) {
+            this.elements.notificationSettings.style.display = 'none';
+            return;
+        }
+
+        // Load saved values
+        this.elements.globalNotificationTime.value = this.notificationSettings.global;
+
+        for (const prayer in this.notificationSettings.specific) {
+            const input = document.getElementById(`${prayer.toLowerCase()}-notification`);
+            if (input && this.notificationSettings.specific[prayer]) {
+                input.value = this.notificationSettings.specific[prayer];
+            }
+        }
+
+        this.elements.notificationSettings.addEventListener('click', () => {
+            this.showNotificationModal();
+        });
+
+        this.elements.closeNotificationModal.addEventListener('click', () => {
+            this.hideNotificationModal();
+        });
+
+        this.elements.saveNotificationSettings.addEventListener('click', () => {
+            this.saveNotificationSettings();
+        });
+    }
+
+    async requestNotificationPermission() {
+        if (Notification.permission !== 'granted') {
+            const permission = await Notification.requestPermission();
+            return permission === 'granted';
+        }
+        return true;
+    }
+
+    saveNotificationSettings() {
+        this.notificationSettings = {
+            global: parseInt(this.elements.globalNotificationTime.value) || 15,
+            specific: {
+                Fajr: parseInt(document.getElementById('fajr-notification').value) || null,
+                Dhuhr: parseInt(document.getElementById('dhuhr-notification').value) || null,
+                Asr: parseInt(document.getElementById('asr-notification').value) || null,
+                Maghrib: parseInt(document.getElementById('maghrib-notification').value) || null,
+                Isha: parseInt(document.getElementById('isha-notification').value) || null
+            }
+        };
+
+        localStorage.setItem('notificationSettings', JSON.stringify(this.notificationSettings));
+        this.hideNotificationModal();
+        this.scheduleNotifications();
+    }
+
+    scheduleNotifications() {
+        if (Notification.permission !== 'granted') return;
+
+        // Clear existing notifications
+        if (this.notificationTimers) {
+            this.notificationTimers.forEach(timer => clearTimeout(timer));
+        }
+        this.notificationTimers = [];
+
+        const now = new Date();
+        const currentTime = now.getHours() * 60 * 60 + now.getMinutes() * 60 + now.getSeconds();
+
+        Object.entries(this.times).forEach(([prayer, time]) => {
+            if (['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].includes(prayer)) {
+                const [hours, minutes] = time.split(':');
+                let prayerTime = parseInt(hours) * 60 * 60 + parseInt(minutes) * 60;
+
+                // Get notification time (specific or global)
+                const notificationMinutes = this.notificationSettings.specific[prayer] ||
+                    this.notificationSettings.global;
+
+                // Calculate notification time
+                let notificationTime = prayerTime - (notificationMinutes * 60);
+
+                // If prayer time is tomorrow (for Fajr)
+                if (prayerTime < currentTime) {
+                    prayerTime += 24 * 60 * 60;
+                    notificationTime += 24 * 60 * 60;
+                }
+
+                // Schedule notification
+                if (notificationTime > currentTime) {
+                    const delay = (notificationTime - currentTime) * 1000;
+                    const timer = setTimeout(() => {
+                        new Notification(`حان وقت الصلاة`, {
+                            body: `صلاة ${this.getPrayerNameInArabic(prayer)} بعد ${notificationMinutes} دقيقة`,
+                            icon: 'icons/icon-192x192.png'
+                        });
+                    }, delay);
+                    this.notificationTimers.push(timer);
+                }
+            }
+        });
+    }
+
+    showNotificationModal() {
+        this.requestNotificationPermission();
+        this.elements.notificationModal.classList.remove('hidden');
+    }
+
+    hideNotificationModal() {
+        this.elements.notificationModal.classList.add('hidden');
     }
 }
 

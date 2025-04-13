@@ -1,4 +1,4 @@
-const CACHE_NAME = 'prayer-times-v2';
+const CACHE_NAME = 'prayer-times-v3';
 const OFFLINE_URL = 'offline.html';
 const urlsToCache = [
     './',
@@ -43,14 +43,17 @@ self.addEventListener('fetch', event => {
     event.respondWith(
         fetch(event.request)
             .then(response => {
-                // Clone the response before using it
-                const responseToCache = response.clone();
 
-                // Cache the successful response
-                caches.open(CACHE_NAME)
-                    .then(cache => {
-                        cache.put(event.request, responseToCache);
-                    });
+                if (response.ok && urlsToCache.includes(new URL(event.request.url).pathname)) {
+                    // Clone the response before using it
+                    const responseToCache = response.clone();
+
+                    // Cache the successful response
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            cache.put(event.request, responseToCache);
+                        });
+                }
 
                 return response;
             })
