@@ -285,46 +285,24 @@ class PrayerTimes {
     scheduleNotifications() {
         if (Notification.permission !== 'granted') return;
 
-        // Clear existing notifications
-        if (this.notificationTimers) {
-            this.notificationTimers.forEach(timer => clearTimeout(timer));
-        }
-        this.notificationTimers = [];
-
-        const now = new Date();
-        const currentTime = now.getHours() * 60 * 60 + now.getMinutes() * 60 + now.getSeconds();
-
-        Object.entries(this.times).forEach(([prayer, time]) => {
+        const notificationData = Object.entries(this.times).map(([prayer, time]) => {
             if (['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].includes(prayer)) {
-                const [hours, minutes] = time.split(':');
-                let prayerTime = parseInt(hours) * 60 * 60 + parseInt(minutes) * 60;
-
-                // Get notification time (specific or global)
-                const notificationMinutes = this.notificationSettings.specific[prayer] ||
-                    this.notificationSettings.global;
-
-                // Calculate notification time
-                let notificationTime = prayerTime - (notificationMinutes * 60);
-
-                // If prayer time is tomorrow (for Fajr)
-                if (prayerTime < currentTime) {
-                    prayerTime += 24 * 60 * 60;
-                    notificationTime += 24 * 60 * 60;
-                }
-
-                // Schedule notification
-                if (notificationTime > currentTime) {
-                    const delay = (notificationTime - currentTime) * 1000;
-                    const timer = setTimeout(() => {
-                        new Notification(`حان وقت الصلاة`, {
-                            body: `صلاة ${this.getPrayerNameInArabic(prayer)} بعد ${notificationMinutes} دقيقة`,
-                            icon: 'icons/icon-192x192.png'
-                        });
-                    }, delay);
-                    this.notificationTimers.push(timer);
-                }
+                return {
+                    prayer,
+                    time,
+                    notificationMinutes: this.notificationSettings.specific[prayer] ||
+                        this.notificationSettings.global
+                };
             }
-        });
+        }).filter(Boolean);
+
+        // Send to service worker
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'SCHEDULE_NOTIFICATIONS',
+                data: notificationData
+            });
+        }
     }
 
     showNotificationModal() {

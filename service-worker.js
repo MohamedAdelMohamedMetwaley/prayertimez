@@ -84,3 +84,51 @@ self.addEventListener('fetch', event => {
             })
     );
 });
+
+let notificationTimers = [];
+
+self.addEventListener('message', (event) => {
+    if (event.data.type === 'SCHEDULE_NOTIFICATIONS') {
+        // Clear existing timers
+        notificationTimers.forEach(timer => clearTimeout(timer));
+        notificationTimers = [];
+
+        const now = new Date();
+        const currentTime = now.getHours() * 60 * 60 + now.getMinutes() * 60 + now.getSeconds();
+
+        event.data.data.forEach(({ prayer, time, notificationMinutes }) => {
+            const [hours, minutes] = time.split(':');
+            let prayerTime = parseInt(hours) * 60 * 60 + parseInt(minutes) * 60;
+            let notificationTime = prayerTime - (notificationMinutes * 60);
+
+            // If prayer time is tomorrow (for Fajr)
+            if (prayerTime < currentTime) {
+                prayerTime += 24 * 60 * 60;
+                notificationTime += 24 * 60 * 60;
+            }
+
+            // Schedule notification
+            if (notificationTime > currentTime) {
+                const delay = (notificationTime - currentTime) * 1000;
+                const timer = setTimeout(() => {
+                    self.registration.showNotification('حان وقت الصلاة', {
+                        body: `صلاة ${getPrayerNameInArabic(prayer)} بعد ${notificationMinutes} دقيقة`,
+                        icon: 'public/icons/icon-192x192.png'
+                    });
+                }, delay);
+                notificationTimers.push(timer);
+            }
+        });
+    }
+});
+
+function getPrayerNameInArabic(prayer) {
+    const names = {
+        Fajr: 'الفجر',
+        Dhuhr: 'الظهر',
+        Asr: 'العصر',
+        Maghrib: 'المغرب',
+        Isha: 'العشاء'
+    };
+    return names[prayer] || prayer;
+}
