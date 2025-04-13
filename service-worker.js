@@ -3,7 +3,6 @@ const OFFLINE_URL = 'public/offline.html';
 const urlsToCache = [
     './',
     './index.html',
-    './public/styles/style.css',
     './public/styles/output.css',
     './public/app.js',
     './manifest.json',
@@ -18,6 +17,9 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 return cache.addAll(urlsToCache);
+            })
+            .catch(error => {
+                console.error('Failed to cache resources:', error);
             })
     );
     self.skipWaiting();
@@ -46,6 +48,9 @@ self.addEventListener('fetch', event => {
             .then(response => {
 
                 if (response.ok && urlsToCache.includes(new URL(event.request.url).pathname)) {
+                    console.log(
+                        `Caching ${event.request.url} with status ${response.status}`
+                    )
                     // Clone the response before using it
                     const responseToCache = response.clone();
 
