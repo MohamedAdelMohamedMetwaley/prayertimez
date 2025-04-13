@@ -1,13 +1,14 @@
-const CACHE_NAME = 'prayer-times-v3';
-const OFFLINE_URL = 'offline.html';
+const CACHE_NAME = 'prayer-times-v4';
+const OFFLINE_URL = 'public/offline.html';
 const urlsToCache = [
     './',
     './index.html',
-    './style.css',
-    './app.js',
+    './public/styles/style.css',
+    './public/styles/output.css',
+    './public/app.js',
     './manifest.json',
-    './icons/icon-192x192.png',
-    './icons/icon-512x512.png',
+    './public/icons/icon-192x192.png',
+    './public/icons/icon-512x512.png',
     'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap'
 ];
 

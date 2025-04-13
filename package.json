@@ -1,0 +1,27 @@
+{
+  "name": "prayertimez",
+  "version": "1.0.0",
+  "description": "",
+  "main": "public/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tailwindcss -i ./src/input.css -o ./public/styles/output.css --minify",
+    "watch": "tailwindcss -i ./src/input.css -o ./public/styles/output.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MohamedAdelMohamedMetwaley/prayertimez.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/MohamedAdelMohamedMetwaley/prayertimez/issues"
+  },
+  "homepage": "https://github.com/MohamedAdelMohamedMetwaley/prayertimez#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.3",
+    "tailwindcss": "^4.1.3"
+  }
+}
