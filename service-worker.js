@@ -3,6 +3,7 @@ const OFFLINE_URL = 'public/offline.html';
 const urlsToCache = [
     './',
     './index.html',
+    './public/offline.html',
     './public/styles/output.css',
     './public/app.js',
     './manifest.json',
@@ -47,7 +48,7 @@ self.addEventListener('fetch', event => {
         fetch(event.request)
             .then(response => {
 
-                if (response.ok && urlsToCache.includes(new URL(event.request.url).pathname)) {
+                if (response.ok && (urlsToCache.includes(new URL(event.request.url).pathname) || event.request.url.includes("api"))) {
                     console.log(
                         `Caching ${event.request.url} with status ${response.status}`
                     )
