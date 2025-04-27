@@ -1,4 +1,4 @@
-const CACHE_NAME = 'prayer-times-v4';
+const CACHE_NAME = 'prayer-times-v5';
 const OFFLINE_URL = 'public/offline.html';
 const urlsToCache = [
     './',
